@@ -2,7 +2,7 @@
   <div class="menu-item-card" :class="{ 'out-of-stock': isOutOfStock }">
     <div class="menu-item-image">
       <img
-        v-if="product.gambar"
+        v-if="product.gambar && !imageFailed"
         :src="product.gambar"
         :alt="product.nama"
         loading="lazy"
@@ -25,7 +25,7 @@
     </div>
 
     <div class="menu-item-action">
-      <template v-if="!isOutOfStock">
+      <template v-if="!isOutOfStock && !orderingDisabled">
         <button
           v-if="cartQty === 0"
           class="btn-add"
@@ -54,15 +54,17 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 const props = defineProps({
   product: { type: Object, required: true },
-  cartQty: { type: Number, default: 0 }
+  cartQty: { type: Number, default: 0 },
+  orderingDisabled: { type: Boolean, default: false }
 })
 
 defineEmits(['add', 'increment', 'decrement'])
 
 const isOutOfStock = computed(() => props.product.stok === 0 || props.product.status === 'nonaktif')
+const imageFailed = ref(false)
 
 function formatPrice(price) {
   return new Intl.NumberFormat('id-ID', {
@@ -72,8 +74,7 @@ function formatPrice(price) {
   }).format(price || 0)
 }
 
-function onImageError(e) {
-  e.target.style.display = 'none'
-  e.target.parentElement.querySelector('.menu-item-placeholder')?.style?.removeProperty('display')
+function onImageError() {
+  imageFailed.value = true
 }
 </script>

@@ -50,16 +50,26 @@
 
     <!-- Category Tabs -->
     <CategoryTabs
-      v-if="tableContext?.available !== false"
+      v-if="!loading && !tableLoading && !error && !tableError && tableContext && products.length"
       :categories="categories"
       :active-category="activeCategory"
       @select="activeCategory = $event"
     />
 
     <!-- Loading State -->
-    <div v-if="loading || tableLoading" class="loading-container">
-      <div class="loading-spinner"></div>
-      <p class="loading-text">Memuat menu...</p>
+    <div v-if="loading || tableLoading" class="menu-loading" role="status" aria-label="Memuat menu">
+      <div class="skeleton menu-skeleton-tabs"></div>
+      <div class="menu-grid" aria-hidden="true">
+        <div v-for="item in 6" :key="item" class="menu-skeleton-card">
+          <div class="skeleton menu-skeleton-image"></div>
+          <div class="menu-skeleton-body">
+            <div class="skeleton menu-skeleton-line"></div>
+            <div class="skeleton menu-skeleton-line short"></div>
+            <div class="skeleton menu-skeleton-button"></div>
+          </div>
+        </div>
+      </div>
+      <span class="sr-only">Memuat menu...</span>
     </div>
 
     <!-- Error State -->
@@ -68,39 +78,36 @@
         <circle cx="12" cy="12" r="10" />
         <path d="M12 8v4m0 4h.01" />
       </svg>
-      <p>QR meja tidak valid atau data toko tidak dapat dimuat</p>
+      <p>{{ loadErrorMessage }}</p>
       <button class="btn-retry" @click="retryLoad">Coba Lagi</button>
     </div>
 
-    <div v-else-if="tableContext.available === false" class="error-state">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <rect x="3" y="4" width="18" height="16" rx="3" />
-        <path d="M8 2v4m8-4v4M3 10h18" />
-      </svg>
-      <p>{{ tableContext.name }} sedang memiliki pesanan aktif</p>
-      <small>Silakan lihat status pesanan sebelumnya atau hubungi kasir.</small>
-    </div>
-
     <!-- Menu Grid -->
-    <div v-else class="menu-grid">
-      <MenuItem
-        v-for="product in filteredProducts"
-        :key="product._id"
-        :product="product"
-        :cart-qty="getCartQty(product._id)"
-        @add="addToCart"
-        @increment="incrementQty"
-        @decrement="decrementQty"
-      />
+    <div v-else>
+      <div v-if="tableContext.available === false" class="menu-notice" role="status">
+        {{ tableContext.name }} memiliki pesanan aktif. Menu tetap bisa dilihat, tetapi pesanan baru dari QR ini belum dapat dibuat. Hubungi kasir untuk menambah item.
+      </div>
+      <div class="menu-grid">
+        <MenuItem
+          v-for="product in filteredProducts"
+          :key="product._id"
+          :product="product"
+          :cart-qty="getCartQty(product._id)"
+          :ordering-disabled="tableContext.available === false"
+          @add="addToCart"
+          @increment="incrementQty"
+          @decrement="decrementQty"
+        />
 
-      <!-- Empty State -->
-      <div v-if="filteredProducts.length === 0" class="empty-state">
-        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-          <circle cx="11" cy="11" r="8" />
-          <path d="M21 21l-4.35-4.35" />
-          <path d="M8 11h6" />
-        </svg>
-        <p>Tidak ada menu ditemukan</p>
+        <!-- Empty State -->
+        <div v-if="filteredProducts.length === 0" class="empty-state">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
+            <path d="M8 11h6" />
+          </svg>
+          <p>{{ products.length === 0 ? 'Belum ada produk yang dijual di POS toko ini' : 'Tidak ada menu yang cocok dengan pencarian' }}</p>
+        </div>
       </div>
     </div>
 
@@ -164,6 +171,12 @@ const {
 }))
 
 const tableContext = computed(() => tableResult.value?.GetPOSTablePublic || null)
+const loadErrorMessage = computed(() => {
+  if (tableError.value) return `Data meja gagal dimuat: ${tableError.value.message}`
+  if (!tableContext.value) return 'QR meja tidak valid atau meja tidak ditemukan di toko ini.'
+  if (error.value) return `Menu gagal dimuat: ${error.value.message}`
+  return 'Data toko tidak dapat dimuat.'
+})
 
 function retryLoad() {
   refetch()
