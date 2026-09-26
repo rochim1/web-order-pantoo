@@ -4,6 +4,7 @@ export const GET_TABLE_CONTEXT = gql`
   query GetPOSTablePublic($instansi_id: ID!, $toko_id: ID!, $table_id: ID!) {
     GetPOSTablePublic(instansi_id: $instansi_id, toko_id: $toko_id, table_id: $table_id) {
       _id
+      nama_instansi
       name
       capacity
       area

@@ -10,7 +10,7 @@
               <img src="/favicon.svg" alt="" />
             </div>
             <div>
-              <h1 class="brand-title">Pantoo Order</h1>
+              <h1 class="brand-title" :title="instansiName">{{ instansiName }}</h1>
               <p class="brand-subtitle">Menu untuk meja Anda</p>
             </div>
           </div>
@@ -175,6 +175,7 @@ const {
 }))
 
 const tableContext = computed(() => tableResult.value?.GetPOSTablePublic || null)
+const instansiName = computed(() => tableContext.value?.nama_instansi?.trim() || 'Menu Toko')
 const loadErrorMessage = computed(() => {
   if (tableError.value) return `Data meja gagal dimuat: ${tableError.value.message}`
   if (!tableContext.value) return 'QR meja tidak valid atau meja tidak ditemukan di toko ini.'
