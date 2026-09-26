@@ -150,7 +150,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .order-summary-divider { height: 1px; margin: 10px 0 6px; background: var(--border-color); }
 .summary-total { font-size: .95rem; font-weight: 800; }
 .summary-total span:last-child { color: var(--accent); }
-.cart-payment-hint { margin: 0 0 12px; padding: 0 2px; color: var(--text-muted); font-size: .73rem; }
+.cart-payment-hint, .pay-before-processing-notice { display: grid; gap: 3px; margin: 0 0 12px; padding: 12px; border: 1px solid #c4e1db; border-radius: 11px; background: #eff9f6; color: #28514d; font-size: .78rem; line-height: 1.45; }
+.cart-payment-hint strong, .pay-before-processing-notice strong { color: #086e65; font-size: .82rem; }
+.pay-before-processing-notice { margin: 0; }
 .btn-submit { position: fixed; z-index: 20; left: 16px; right: 16px; bottom: calc(12px + env(safe-area-inset-bottom)); min-height: 54px; width: auto; padding: 11px 16px; border-radius: 13px; background: var(--accent-gradient); color: white; box-shadow: 0 10px 24px rgba(4, 91, 84, .25); font-weight: 700; }
 .btn-submit:disabled { opacity: .65; }
 .btn-submit-content { display: flex; justify-content: space-between; align-items: center; gap: 12px; }

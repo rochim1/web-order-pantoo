@@ -13,6 +13,7 @@ export const GET_TABLE_CONTEXT = gql`
       status
       available
       require_customer
+      web_order_pay_before_processing
     }
   }
 `
@@ -70,6 +71,7 @@ export const GET_ORDER_STATUS = gql`
       order_no
       status
       status_pembayaran
+      web_order_pay_before_processing
       items {
         nama
         qty

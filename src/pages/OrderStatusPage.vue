@@ -69,8 +69,13 @@
             <circle cx="12" cy="12" r="10" />
             <path d="M12 16v-4m0-4h.01" />
           </svg>
-          Pembayaran dilakukan di kasir
+          {{ order.status_pembayaran === 'lunas' ? 'Pembayaran diterima' : 'Pembayaran dilakukan langsung di kasir' }}
         </p>
+      </div>
+
+      <div v-if="order.web_order_pay_before_processing && order.status_pembayaran !== 'lunas' && !isFinalStatus" class="pay-before-processing-notice" role="status">
+        <strong>Bayar di kasir agar pesanan diproses</strong>
+        <span>Tunjukkan nomor pesanan {{ order.order_no }} kepada kasir. Pembayaran online belum tersedia.</span>
       </div>
 
       <!-- Order Items -->
@@ -167,6 +172,7 @@ const productionLabel = (status) => ({
   voided: 'Dibatalkan',
 }[status] || 'Menunggu dapur')
 const statusTitle = computed(() => {
+  if (order.value?.web_order_pay_before_processing && order.value?.status_pembayaran !== 'lunas' && !isFinalStatus.value) return 'Menunggu Pembayaran'
   if (order.value?.status === 'Selesai') return 'Pesanan Selesai'
   if (order.value?.status === 'Batal') return 'Pesanan Dibatalkan'
   if (order.value?.status === 'Siap') return 'Pesanan Siap'
@@ -175,6 +181,7 @@ const statusTitle = computed(() => {
   return 'Pesanan Diterima'
 })
 const statusSubtitle = computed(() => {
+  if (order.value?.web_order_pay_before_processing && order.value?.status_pembayaran !== 'lunas' && !isFinalStatus.value) return 'Silakan bayar di kasir agar pesanan mulai diproses.'
   if (order.value?.status === 'Selesai') return 'Terima kasih telah memesan di tempat kami.'
   if (order.value?.status === 'Batal') return 'Silakan hubungi staf apabila Anda memerlukan bantuan.'
   if (order.value?.status === 'Siap') return 'Pesanan Anda siap untuk disajikan atau diambil.'

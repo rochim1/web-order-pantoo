@@ -103,7 +103,11 @@
       <!-- Order Summary -->
       <OrderSummary :items="cartItems" :total="cartTotal" />
 
-      <p class="cart-payment-hint">Pembayaran dilakukan di kasir setelah pesanan dikirim.</p>
+      <div class="cart-payment-hint" role="note">
+        <strong>Pembayaran di kasir</strong>
+        <span v-if="tableContext?.web_order_pay_before_processing">Pesanan akan mulai diproses setelah Anda membayar di kasir. Tunjukkan nomor pesanan setelah dikirim.</span>
+        <span v-else>Bayar langsung di kasir setelah pesanan dikirim. Tidak ada pembayaran online di halaman ini.</span>
+      </div>
       <div v-if="submitError" class="cart-feedback error" role="alert">{{ submitError }}</div>
 
       <!-- Submit Button -->
