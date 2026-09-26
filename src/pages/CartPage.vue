@@ -157,11 +157,15 @@ const {
 const customerNameField = ref(null)
 const submitError = ref('')
 const submitting = ref(false)
-const { result: tableResult, loading: tableLoading, error: tableError, refetch: refetchTable } = useQuery(GET_TABLE_CONTEXT, () => ({
-  instansi_id: route.params.instansiId,
-  toko_id: route.params.tokoId,
-  table_id: route.params.tableId
-}))
+const { result: tableResult, loading: tableLoading, error: tableError, refetch: refetchTable } = useQuery(
+  GET_TABLE_CONTEXT,
+  () => ({
+    instansi_id: route.params.instansiId,
+    toko_id: route.params.tokoId,
+    table_id: route.params.tableId
+  }),
+  { fetchPolicy: 'network-only' }
+)
 const tableContext = computed(() => tableResult.value?.GetPOSTablePublic || null)
 const requireCustomer = computed(() => tableContext.value?.require_customer === true)
 
