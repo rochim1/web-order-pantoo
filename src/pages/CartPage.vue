@@ -62,6 +62,16 @@
         />
       </div>
 
+      <!-- Customer mode -->
+      <div class="form-section">
+        <span class="form-label">Data pemesan</span>
+        <div class="customer-mode-options" role="group" aria-label="Pilih cara memesan">
+          <button type="button" :class="['customer-mode-option', { active: !customerProfileRequested }]" :aria-pressed="!customerProfileRequested" @click="customerProfileRequested = false">Pesan sebagai tamu</button>
+          <button type="button" :class="['customer-mode-option', { active: customerProfileRequested }]" :aria-pressed="customerProfileRequested" @click="customerProfileRequested = true">Daftarkan saat bayar</button>
+        </div>
+        <p class="customer-mode-caption">{{ customerProfileRequested ? 'Nomor Anda diteruskan ke kasir. Kasir akan mengonfirmasi profil pelanggan saat pembayaran; belum otomatis terdaftar.' : 'Nama bebas untuk mengenali pesanan. Tidak membuat profil pelanggan.' }}</p>
+      </div>
+
       <!-- Customer Name -->
       <div class="form-section">
         <label class="form-label" for="customer-name">
@@ -69,7 +79,7 @@
             <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
             <circle cx="12" cy="7" r="4" />
           </svg>
-          Nama Pemesan {{ requireCustomer ? '(wajib)' : '(opsional)' }}
+          Nama Pemesan {{ requireCustomer || customerProfileRequested ? '(wajib)' : '(opsional)' }}
         </label>
         <input
           id="customer-name"
@@ -78,8 +88,24 @@
           type="text"
           class="form-input"
           placeholder="Masukkan nama Anda..."
-          :required="requireCustomer"
+          :required="requireCustomer || customerProfileRequested"
         />
+      </div>
+
+      <div v-if="customerProfileRequested" class="form-section">
+        <label class="form-label" for="customer-phone">Nomor telepon (wajib)</label>
+        <input
+          id="customer-phone"
+          ref="customerPhoneField"
+          v-model="customerPhone"
+          type="tel"
+          inputmode="tel"
+          autocomplete="tel"
+          class="form-input"
+          placeholder="Contoh: 081234567890"
+          required
+        />
+        <p class="customer-mode-caption">Dengan mengirim pesanan, Anda meminta kasir menggunakan nama dan nomor ini untuk menghubungkan atau membuat profil pelanggan.</p>
       </div>
 
       <!-- Order Note -->
@@ -147,6 +173,8 @@ const {
   cartTotal,
   cartItemCount,
   customerName,
+  customerPhone,
+  customerProfileRequested,
   orderNote,
   updateQty,
   removeFromCart,
@@ -155,6 +183,7 @@ const {
 } = useCart(cartScope)
 
 const customerNameField = ref(null)
+const customerPhoneField = ref(null)
 const submitError = ref('')
 const submitting = ref(false)
 const { result: tableResult, loading: tableLoading, error: tableError, refetch: refetchTable } = useQuery(
@@ -196,9 +225,14 @@ async function submitOrder() {
     submitError.value = 'Meja sudah memiliki pesanan aktif. Hubungi kasir untuk menambah menu.'
     return
   }
-  if (requireCustomer.value && !customerName.value.trim()) {
+  if ((requireCustomer.value || customerProfileRequested.value) && !customerName.value.trim()) {
     submitError.value = 'Nama pemesan wajib diisi untuk toko ini.'
     customerNameField.value?.focus()
+    return
+  }
+  if (customerProfileRequested.value && !/^\+?[0-9]{8,15}$/.test(customerPhone.value.replace(/[\s().-]/g, ''))) {
+    submitError.value = 'Nomor telepon pelanggan harus berisi 8–15 angka.'
+    customerPhoneField.value?.focus()
     return
   }
   submitting.value = true
@@ -226,6 +260,8 @@ async function submitOrder() {
       toko_id: tokoId,
       table_id: tableId,
       pelanggan_nama: customerName.value.trim() || undefined,
+      pelanggan_telepon: customerProfileRequested.value ? customerPhone.value.trim() : undefined,
+      customer_profile_requested: customerProfileRequested.value,
       items,
       catatan: notes.length > 0 ? notes.join('; ') : undefined,
       client_request_id: getOrCreateRequestId(instansiId, tokoId, tableId)

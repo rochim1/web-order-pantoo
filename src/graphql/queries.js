@@ -42,6 +42,8 @@ export const CREATE_ORDER = gql`
     $toko_id: ID!
     $table_id: ID!
     $pelanggan_nama: String
+    $pelanggan_telepon: String
+    $customer_profile_requested: Boolean
     $items: [POSOrderItemInput!]!
     $catatan: String
     $client_request_id: String
@@ -51,6 +53,8 @@ export const CREATE_ORDER = gql`
       toko_id: $toko_id
       table_id: $table_id
       pelanggan_nama: $pelanggan_nama
+      pelanggan_telepon: $pelanggan_telepon
+      customer_profile_requested: $customer_profile_requested
       items: $items
       catatan: $catatan
       client_request_id: $client_request_id
@@ -72,6 +76,7 @@ export const GET_ORDER_STATUS = gql`
       status
       status_pembayaran
       web_order_pay_before_processing
+      customer_profile_requested
       items {
         nama
         qty

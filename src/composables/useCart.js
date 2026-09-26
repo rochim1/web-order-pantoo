@@ -9,10 +9,12 @@ function loadState(scope) {
     return {
       items: Array.isArray(parsed.items) ? parsed.items : [],
       customerName: String(parsed.customerName || ''),
+      customerPhone: String(parsed.customerPhone || ''),
+      customerProfileRequested: parsed.customerProfileRequested === true,
       orderNote: String(parsed.orderNote || '')
     }
   } catch {
-    return { items: [], customerName: '', orderNote: '' }
+    return { items: [], customerName: '', customerPhone: '', customerProfileRequested: false, orderNote: '' }
   }
 }
 
@@ -79,6 +81,8 @@ export function useCart(scope = 'default') {
   const clearCart = () => {
     state.items.splice(0, state.items.length)
     state.customerName = ''
+    state.customerPhone = ''
+    state.customerProfileRequested = false
     state.orderNote = ''
     sessionStorage.removeItem(storageKey(scope))
   }
@@ -91,6 +95,14 @@ export function useCart(scope = 'default') {
   return {
     cartItems: state.items,
     customerName: computed({ get: () => state.customerName, set: (value) => { state.customerName = value } }),
+    customerPhone: computed({ get: () => state.customerPhone, set: (value) => { state.customerPhone = value } }),
+    customerProfileRequested: computed({
+      get: () => state.customerProfileRequested,
+      set: (value) => {
+        state.customerProfileRequested = value === true
+        if (!state.customerProfileRequested) state.customerPhone = ''
+      }
+    }),
     orderNote: computed({ get: () => state.orderNote, set: (value) => { state.orderNote = value } }),
     addToCart, removeFromCart, updateQty, updateItemNote, incrementQty, decrementQty,
     clearCart, getCartQty, cartTotal, cartItemCount

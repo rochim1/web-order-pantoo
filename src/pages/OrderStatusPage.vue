@@ -77,6 +77,10 @@
         <strong>Bayar di kasir agar pesanan diproses</strong>
         <span>Tunjukkan nomor pesanan {{ order.order_no }} kepada kasir. Pembayaran online belum tersedia.</span>
       </div>
+      <div v-if="order.customer_profile_requested && order.status_pembayaran !== 'lunas' && !isFinalStatus" class="pay-before-processing-notice" role="status">
+        <strong>Permintaan menjadi pelanggan tercatat</strong>
+        <span>Konfirmasikan nama dan nomor telepon kepada kasir saat membayar. Profil belum dibuat otomatis.</span>
+      </div>
 
       <!-- Order Items -->
       <div class="order-items-section">
