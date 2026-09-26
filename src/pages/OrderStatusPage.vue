@@ -1,7 +1,15 @@
 <template>
   <div class="page order-status-page">
+    <nav class="status-toolbar" aria-label="Navigasi pesanan">
+      <button class="btn-back" type="button" aria-label="Kembali ke menu" @click="orderAgain">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <span>Detail pesanan</span>
+    </nav>
     <!-- Header -->
-    <header class="status-header">
+    <header v-if="order" class="status-header">
       <div class="status-header-icon">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M9 12l2 2 4-4" />
@@ -13,9 +21,13 @@
     </header>
 
     <!-- Loading -->
-    <div v-if="loading && !order" class="loading-container">
-      <div class="loading-spinner"></div>
-      <p class="loading-text">Memuat pesanan...</p>
+    <div v-if="loading && !order" class="status-loading" role="status" aria-label="Memuat status pesanan">
+      <div class="skeleton status-skeleton-icon"></div>
+      <div class="skeleton status-skeleton-title"></div>
+      <div class="skeleton status-skeleton-subtitle"></div>
+      <div class="skeleton status-skeleton-card"></div>
+      <div class="skeleton status-skeleton-card short"></div>
+      <span class="sr-only">Memuat pesanan...</span>
     </div>
 
     <!-- Error -->

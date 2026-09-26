@@ -3,7 +3,7 @@
     <h3 class="order-summary-title">Ringkasan Pesanan</h3>
 
     <div class="order-summary-items">
-      <div v-for="item in items" :key="item.nama || item.product?.nama" class="summary-row">
+      <div v-for="(item, index) in items" :key="item.product?._id || item.produk_id || index" class="summary-row">
         <span class="summary-item-name">
           {{ item.nama || item.product?.nama }}
           <span class="summary-item-qty">× {{ item.qty }}</span>

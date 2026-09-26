@@ -2,12 +2,15 @@
   <div class="page cart-page">
     <!-- Header -->
     <header class="cart-header">
-      <button class="btn-back" @click="goBack">
+      <button type="button" class="btn-back" aria-label="Kembali ke menu" @click="goBack">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
       </button>
-      <h1 class="page-title">Keranjang Anda</h1>
+      <div class="cart-header-copy">
+        <h1 class="page-title">Keranjang</h1>
+        <p>Periksa pesanan sebelum dikirim</p>
+      </div>
       <span class="cart-count-badge" v-if="cartItemCount > 0">{{ cartItemCount }}</span>
     </header>
 
@@ -32,7 +35,22 @@
 
     <!-- Cart Content -->
     <div v-else class="cart-content">
+      <div class="cart-context-bar">
+        <span>{{ tableContext?.name || 'Meja Anda' }} · {{ cartItemCount }} item</span>
+        <button type="button" @click="goBack">+ Tambah menu</button>
+      </div>
+
+      <div v-if="tableLoading" class="cart-context-loading" role="status">Memeriksa meja...</div>
+      <div v-else-if="tableError || !tableContext" class="cart-feedback error" role="alert">
+        Meja gagal dimuat. Periksa koneksi dan coba lagi.
+        <button type="button" @click="refetchTable()">Coba lagi</button>
+      </div>
+      <div v-else-if="tableContext.available === false" class="cart-feedback warning" role="status">
+        Meja ini sudah memiliki pesanan aktif. Hubungi kasir jika ingin menambah menu.
+      </div>
+
       <!-- Cart Items -->
+      <h2 class="cart-section-title">Item pesanan</h2>
       <div class="cart-items-list">
         <CartItem
           v-for="item in cartItems"
@@ -46,7 +64,7 @@
 
       <!-- Customer Name -->
       <div class="form-section">
-        <label class="form-label">
+        <label class="form-label" for="customer-name">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
             <circle cx="12" cy="7" r="4" />
@@ -54,7 +72,9 @@
           Nama Pemesan {{ requireCustomer ? '(wajib)' : '(opsional)' }}
         </label>
         <input
-          v-model="customerNameInput"
+          id="customer-name"
+          ref="customerNameField"
+          v-model="customerName"
           type="text"
           class="form-input"
           placeholder="Masukkan nama Anda..."
@@ -64,7 +84,7 @@
 
       <!-- Order Note -->
       <div class="form-section">
-        <label class="form-label">
+        <label class="form-label" for="order-note">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
             <path d="M14 2v6h6M16 13H8m8 4H8m2-8H8" />
@@ -72,7 +92,8 @@
           Catatan Pesanan (opsional)
         </label>
         <textarea
-          v-model="orderNoteInput"
+          id="order-note"
+          v-model="orderNote"
           class="form-textarea"
           placeholder="Contoh: tidak pedas, extra sambal..."
           rows="3"
@@ -82,10 +103,14 @@
       <!-- Order Summary -->
       <OrderSummary :items="cartItems" :total="cartTotal" />
 
+      <p class="cart-payment-hint">Pembayaran dilakukan di kasir setelah pesanan dikirim.</p>
+      <div v-if="submitError" class="cart-feedback error" role="alert">{{ submitError }}</div>
+
       <!-- Submit Button -->
       <button
         class="btn-submit"
-        :disabled="submitting"
+        type="button"
+        :disabled="submitting || tableLoading || !!tableError || !tableContext?.available"
         @click="submitOrder"
       >
         <div v-if="submitting" class="btn-loading">
@@ -93,7 +118,7 @@
           <span>Mengirim pesanan...</span>
         </div>
         <div v-else class="btn-submit-content">
-          <span>Kirim Pesanan</span>
+          <span>{{ tableLoading ? 'Memeriksa meja...' : 'Kirim Pesanan' }}</span>
           <span class="btn-submit-total">{{ formatPrice(cartTotal) }}</span>
         </div>
       </button>
@@ -117,21 +142,24 @@ const {
   cartItems,
   cartTotal,
   cartItemCount,
+  customerName,
+  orderNote,
   updateQty,
   removeFromCart,
   updateItemNote,
   clearCart
 } = useCart(cartScope)
 
-const customerNameInput = ref('')
-const orderNoteInput = ref('')
+const customerNameField = ref(null)
+const submitError = ref('')
 const submitting = ref(false)
-const { result: tableResult } = useQuery(GET_TABLE_CONTEXT, () => ({
+const { result: tableResult, loading: tableLoading, error: tableError, refetch: refetchTable } = useQuery(GET_TABLE_CONTEXT, () => ({
   instansi_id: route.params.instansiId,
   toko_id: route.params.tokoId,
   table_id: route.params.tableId
 }))
-const requireCustomer = computed(() => tableResult.value?.GetPOSTablePublic?.require_customer === true)
+const tableContext = computed(() => tableResult.value?.GetPOSTablePublic || null)
+const requireCustomer = computed(() => tableContext.value?.require_customer === true)
 
 const { mutate: createOrder } = useMutation(CREATE_ORDER)
 
@@ -151,8 +179,18 @@ function getOrCreateRequestId(instansiId, tokoId, tableId) {
 
 async function submitOrder() {
   if (cartItems.length === 0) return
-  if (requireCustomer.value && !customerNameInput.value.trim()) {
-    alert('Nama pemesan wajib diisi untuk toko ini.')
+  submitError.value = ''
+  if (tableLoading.value || tableError.value || !tableContext.value) {
+    submitError.value = 'Data meja belum siap. Coba muat ulang sebelum mengirim pesanan.'
+    return
+  }
+  if (tableContext.value.available === false) {
+    submitError.value = 'Meja sudah memiliki pesanan aktif. Hubungi kasir untuk menambah menu.'
+    return
+  }
+  if (requireCustomer.value && !customerName.value.trim()) {
+    submitError.value = 'Nama pemesan wajib diisi untuk toko ini.'
+    customerNameField.value?.focus()
     return
   }
   submitting.value = true
@@ -171,15 +209,15 @@ async function submitOrder() {
 
     // Build combined notes
     const notes = []
-    if (orderNoteInput.value.trim()) {
-      notes.push(orderNoteInput.value.trim())
+    if (orderNote.value.trim()) {
+      notes.push(orderNote.value.trim())
     }
 
     const result = await createOrder({
       instansi_id: instansiId,
       toko_id: tokoId,
       table_id: tableId,
-      pelanggan_nama: customerNameInput.value.trim() || undefined,
+      pelanggan_nama: customerName.value.trim() || undefined,
       items,
       catatan: notes.length > 0 ? notes.join('; ') : undefined,
       client_request_id: getOrCreateRequestId(instansiId, tokoId, tableId)
@@ -191,15 +229,20 @@ async function submitOrder() {
       sessionStorage.removeItem(requestKey(instansiId, tokoId, tableId))
       if (order.public_token) sessionStorage.setItem(`pantoo_order_token:${order._id}`, order.public_token)
       router.replace(`/${instansiId}/${tokoId}/${tableId}/order/${order._id}`)
+    } else {
+      submitError.value = 'Pesanan belum terkonfirmasi. Periksa koneksi lalu coba lagi.'
     }
   } catch (err) {
     console.error('Order submission error:', err)
     const graphError = err?.graphQLErrors?.[0] || err?.cause?.graphQLErrors?.[0]
     const message = graphError?.message || err?.message || ''
     const isOccupied = graphError?.extensions?.code === 'CONFLICT' || /meja.*(tidak tersedia|terisi)/i.test(message)
-    alert(isOccupied
+    submitError.value = isOccupied
       ? 'Meja ini sudah memiliki pesanan aktif. Silakan lihat status pesanan sebelumnya atau hubungi kasir.'
-      : (message || 'Gagal mengirim pesanan. Silakan coba lagi.'))
+      : (message || 'Gagal mengirim pesanan. Silakan coba lagi.')
+    if (isOccupied) {
+      try { await refetchTable() } catch { /* Keep the actionable error above. */ }
+    }
   } finally {
     submitting.value = false
   }

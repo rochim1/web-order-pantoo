@@ -7,7 +7,8 @@
       :class="{
         completed: stepIndex > index,
         active: stepIndex === index,
-        pending: stepIndex < index
+        pending: stepIndex < index,
+        cancelled: isCancelled
       }"
     >
       <div class="stepper-icon">
@@ -37,8 +38,11 @@ const steps = [
   { key: 'selesai', label: 'Selesai' }
 ]
 
+const isCancelled = computed(() => String(props.currentStatus || '').toLowerCase() === 'batal')
 const stepIndex = computed(() => {
-  const idx = steps.findIndex((s) => s.key === props.currentStatus)
+  const status = String(props.currentStatus || '').toLowerCase()
+  const normalized = status === 'disajikan' ? 'siap' : status
+  const idx = steps.findIndex((s) => s.key === normalized)
   return idx >= 0 ? idx : 0
 })
 </script>

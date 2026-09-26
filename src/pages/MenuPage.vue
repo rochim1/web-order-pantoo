@@ -7,15 +7,11 @@
         <div class="header-top">
           <div class="brand-area">
             <div class="brand-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M3 11l1.5-6A2 2 0 016.44 3.5h11.12A2 2 0 0119.5 5L21 11" />
-                <path d="M3 11h18v2a4 4 0 01-4 4H7a4 4 0 01-4-4v-2z" />
-                <path d="M9 17v2m6-2v2M5 21h14" />
-              </svg>
+              <img src="/favicon.svg" alt="" />
             </div>
             <div>
-              <h1 class="brand-title">Menu Digital</h1>
-              <p class="brand-subtitle">Pesan langsung dari meja Anda</p>
+              <h1 class="brand-title">Pantoo Order</h1>
+              <p class="brand-subtitle">Menu untuk meja Anda</p>
             </div>
           </div>
           <div class="table-badge">
@@ -55,6 +51,14 @@
       :active-category="activeCategory"
       @select="activeCategory = $event"
     />
+
+    <div v-if="!loading && !tableLoading && !error && !tableError && tableContext" class="menu-section-heading">
+      <div>
+        <span class="section-eyebrow">JELAJAHI MENU</span>
+        <h2>Mau pesan apa hari ini?</h2>
+      </div>
+      <span class="menu-count">{{ products.length }} menu</span>
+    </div>
 
     <!-- Loading State -->
     <div v-if="loading || tableLoading" class="menu-loading" role="status" aria-label="Memuat menu">

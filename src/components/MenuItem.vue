@@ -1,6 +1,6 @@
 <template>
   <div class="menu-item-card" :class="{ 'out-of-stock': isOutOfStock }">
-    <div class="menu-item-image">
+    <div class="menu-item-image" :class="`menu-art-${categoryKind}`">
       <img
         v-if="product.gambar && !imageFailed"
         :src="product.gambar"
@@ -9,12 +9,21 @@
         @error="onImageError"
       />
       <div v-else class="menu-item-placeholder">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M3 11l1.5-6A2 2 0 016.44 3.5h11.12A2 2 0 0119.5 5L21 11" />
-          <path d="M3 11h18v2a4 4 0 01-4 4H7a4 4 0 01-4-4v-2z" />
-          <path d="M9 17v2m6-2v2M5 21h14" />
+        <span class="menu-art-orbit" aria-hidden="true"></span>
+        <svg v-if="categoryKind === 'drink'" width="56" height="56" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 12h24l-3 34a9 9 0 0 1-18 0l-3-34ZM22 20h20M26 53h12M29 12V6h12" />
+          <path d="M25 31c4 3 10 3 14 0" />
+        </svg>
+        <svg v-else-if="categoryKind === 'food'" width="56" height="56" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M13 43h38M19 43a13 13 0 0 1 26 0M10 50h44M32 23v-4M22 24l-3-4M42 24l3-4" />
+          <path d="M16 50a5 5 0 0 0 5 5h22a5 5 0 0 0 5-5" />
+        </svg>
+        <svg v-else width="56" height="56" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 31c0-10 8-18 18-18s18 8 18 18-8 18-18 18-18-8-18-18ZM15 30c11 1 20 8 24 17M37 15c-1 11 5 21 12 25" />
+          <path d="M18 52h28" />
         </svg>
       </div>
+      <span v-if="product.kategori" class="menu-image-category">{{ product.kategori }}</span>
       <span v-if="isOutOfStock" class="stock-badge">Habis</span>
     </div>
 
@@ -28,21 +37,24 @@
       <template v-if="!isOutOfStock && !orderingDisabled">
         <button
           v-if="cartQty === 0"
+          type="button"
           class="btn-add"
+          :aria-label="`Tambah ${product.nama} ke keranjang`"
           @click="$emit('add', product)"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M12 5v14M5 12h14" />
           </svg>
+          <span>Tambah</span>
         </button>
         <div v-else class="qty-control">
-          <button class="btn-qty" @click="$emit('decrement', product._id)">
+          <button type="button" class="btn-qty" :aria-label="`Kurangi ${product.nama}`" @click="$emit('decrement', product._id)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M5 12h14" />
             </svg>
           </button>
           <span class="qty-value">{{ cartQty }}</span>
-          <button class="btn-qty btn-qty-plus" @click="$emit('increment', product._id)">
+          <button type="button" class="btn-qty btn-qty-plus" :disabled="cartQty >= Number(product.stok)" :aria-label="`Tambah ${product.nama}`" @click="$emit('increment', product._id)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M12 5v14M5 12h14" />
             </svg>
@@ -64,6 +76,12 @@ const props = defineProps({
 defineEmits(['add', 'increment', 'decrement'])
 
 const isOutOfStock = computed(() => props.product.stok === 0 || props.product.status === 'nonaktif')
+const categoryKind = computed(() => {
+  const category = String(props.product.kategori || '').toLowerCase()
+  if (/minum|drink|beverage|kopi|coffee|tea/.test(category)) return 'drink'
+  if (/makan|food|meal|rice|nasi|pasta/.test(category)) return 'food'
+  return 'snack'
+})
 const imageFailed = ref(false)
 
 function formatPrice(price) {
